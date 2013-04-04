@@ -17,13 +17,16 @@ vga="VGA1"
 clone="false" 
 
 # default clone display mode
-mode="1024x768" 
+mode="1024x768"
+
+# activate only one display at a time
+single="false"
 
 # default extend dvi orientation
-orientation_dvi="right" 
+orientation_dvi="right-of" 
 
 # default extend vga orientation
-orientation_vga="left" 
+orientation_vga="left-of" 
 
 # show debug output
 debug="false"
@@ -46,7 +49,7 @@ usage()
 	echo "invoke multiple times to cycle through display modes"
 	echo "(internal display only -> external display only -> both -> etc.)"
 	echo
-	echo "usage: ./screenswitcher [clone [mode]|extend [orientation]]"
+	echo "usage: ./screenswitcher [clone [mode]|extend [orientation]|single]"
 	echo 
 	echo "    mode:        e.g. 1024x768"
 	echo "    orientation: left or right"
@@ -55,75 +58,60 @@ usage()
 
 display_connected() 
 {
-
 	if [[ -n "$(echo "$xrandr_q" | grep -i "$1 connected")" ]]; then
-		echo true
-	else
-		echo false
-	fi
-
+        echo "true" 
+    else 
+        echo "false"
+    fi
 }
 
 display_active() 
 {
-
 	if [[ -z "$(echo "$xrandr_q" | grep -i "$1 connected (")" ]] && 
 		[[ -z "$(echo "$xrandr_q" | grep -i "$1 disconnected (")" ]]; then
 		echo true
 	else
 		echo false
 	fi
-
 }
 
 extend_screen() 
 {
-
-	xrandr --output $1 --auto --$4-of $2 --output $3 --off
-
+	xrandr --output $1 --auto --$4 $2 --output $3 --off
 }
 
 clone_screen() 
 {
-
 	xrandr --output $1 --mode $4 --output $2 --mode $4 --output $3 --off
-
 }
 
 one_screen() 
 {
-
 	xrandr --output $1 --auto --output $2 --off --output $3 --off	
-
 }
 
 switch_screen() 
 {
-
 	if [ $(display_connected $dvi) == "true" ]; then
 		debug "$dvi connected"
 
 		if [ $(display_active $dvi) == "true" ]; then
-			if [ $(display_active $lvds) == "true" ]; then
+			if [ "$single" == "true" ] || [ $(display_active $lvds) == "true" ]; then
 				debug "$lvds only"
-
 				one_screen $lvds $dvi $vga
 			else
 				debug "$dvi and $lvds"
 
 				if [ "$clone" == "true" ]; then
 					debug "clone $mode"
-
 					clone_screen $lvds $dvi $vga $mode
 				else
 					debug "extend $orientation_dvi"
-					
 					extend_screen $lvds $dvi $vga $orientation_dvi
 				fi
 			fi
 		else
 			debug "$dvi only"
-
 			one_screen $dvi $lvds $vga
 		fi
 	else
@@ -131,58 +119,66 @@ switch_screen()
 			debug "$vga connected"
 			
 			if [ $(display_active $vga) == "true" ]; then
-				if [ $(display_active $lvds) == "true" ]; then
+				if [ "$single" == "true" ] || [ $(display_active $lvds) == "true" ]; then
 					debug "$lvds only"
-					
 					one_screen $lvds $vga $dvi
 				else
 					debug "$vga and $lvds"
 					
 					if [ "$clone" == "true" ]; then
 						debug "clone $mode"
-						
 						clone_screen $lvds $vga $dvi $mode
 					else
 						debug "extend $orientation_vga"
-						
 						extend_screen $lvds $vga $dvi $orientation_vga
 					fi
 				fi
 			else
 				debug "$vga only"
-				
 				one_screen $vga $lvds $dvi
 			fi	
 		else
 			debug "nothing connected"
 			debug "$lvds only"
-			
 			one_screen $lvds $dvi $vga
 		fi
 	fi
-
 }
 
-if [ "$1" == "-h" ] || [ "$1" == "--help" ] || [ "$1" == "help" ]; then
-	usage
-	exit 0
-fi
+case $1 in
+    -h|--help|help) 
+        usage 
+        exit 0
+        ;;
+    clone)
+        clone="true"
+        single="false"
 
-if [ "$1" == "clone" ]; then
-	clone="true"
-
-	if [[ -n "$2" ]]; then
-		mode=$2
-	fi
-elif [ "$1" == "extend" ]; then
-	clone="false"
-
-	if [ "$2" == "left" ] || [ "$2" == "right" ]; then
-		orientation_dvi=$2
-		orientation_vga=$2
-	fi
-fi
-
+        [[ -n "$2" ]] && mode=$2
+        ;;
+    extend)
+        clone="false"
+        single="false"
+        
+        case $2 in
+            left|right)
+                orientation_dvi="$2-of"
+                orientation_vga="$2-of"
+                ;;
+            above|below)
+                orientation_dvi=$2
+                orientation_vga=$2
+                ;;
+            *)
+        esac
+        ;;
+    single)
+        clone="false"
+        single="true"
+        ;;
+    *)
+esac
+    
 switch_screen
 
 exit 0
