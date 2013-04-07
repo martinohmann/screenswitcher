@@ -7,6 +7,8 @@ Usage
 -----
 
   usage: ./screenswitcher [options]
+
+  OPTIONS:
       -h, --help, help          this dialog
       -d, --debug, debug        show debug output
       -y, --dryrun, dryrun      same as debug, but don't switch screen
