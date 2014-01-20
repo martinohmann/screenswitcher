@@ -26,7 +26,7 @@ mode="1024x768"
 single="false"
 
 # default extend dvi orientation
-orientation_dvi="right-of" 
+orientation_dvi="left-of" 
 
 # default extend vga orientation
 orientation_vga="left-of" 
@@ -45,27 +45,24 @@ show_config="false"
 
 xrandr_q=$(xrandr -q)
 
-debug()
-{
+debug() {
   [ "$debug" == "true" ] && echo $1
 }
 
-config()
-{
-  for n in lvds dvi clone clone_res mode single orientation_dvi orientation_vga debug dryrun; do
+config() {
+  for n in lvds dvi vga clone clone_res mode single orientation_dvi orientation_vga debug dryrun; do
     eval echo $n: \${$n}
   done
 }
 
-usage()
-{
+usage() {
   echo
   echo "display switcher utility for laptops"
   echo
   echo "invoke multiple times to cycle through display modes (default mode)"
   echo "(internal display only -> external display only -> both -> internal...)"
   echo
-  echo "usage: ./screenswitcher [options]"
+  echo "usage: screenswitcher [options]"
   echo 
   echo "    -h, --help, help          this dialog"
   echo
@@ -87,8 +84,7 @@ usage()
   echo "                              between internal/external screen"
 }
 
-display_connected() 
-{
+display_connected() {
   if [[ -n "$(echo "$xrandr_q" | grep -i "$1 connected")" ]]; then
     echo "true" 
   else 
@@ -96,8 +92,7 @@ display_connected()
   fi
 }
 
-display_active() 
-{
+display_active() {
   if [[ -z "$(echo "$xrandr_q" | grep -i "$1 connected (")" ]] && 
     [[ -z "$(echo "$xrandr_q" | grep -i "$1 disconnected (")" ]]; then
     echo "true"
@@ -106,23 +101,19 @@ display_active()
   fi
 }
 
-extend_screen() 
-{
+extend_screen() {
   [ "$dryrun" == "false" ] && xrandr --output $1 --auto --$4 $2 --output $3 --off
 }
 
-clone_screen() 
-{
+clone_screen() {
   [ "$dryrun" == "false" ] && xrandr --output $1 --mode $4 --output $2 --mode $4 --output $3 --off
 }
 
-one_screen() 
-{
+one_screen() {
   [ "$dryrun" == "false" ] && xrandr --output $1 --auto --output $2 --off --output $3 --off	
 }
 
-switch_screen() 
-{
+switch_screen() {
   if [ $(display_connected $dvi) == "true" ]; then
     debug "$dvi connected"
 
@@ -208,7 +199,7 @@ while [ -n "$1" ]; do
         fi
       done
       ;;
-    --e|--extend|extend)
+    -e|--extend|extend)
       clone="false"
       single="false"
       shift
