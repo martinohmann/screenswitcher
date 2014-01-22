@@ -22,7 +22,7 @@ Usage
 	                    might be one of 'above|below|left-of|right-of'
 	                    
 	-s                  Single display: don't (cycle) extend or clone,
-                            just switch between internal/external screen
+	                    just switch between internal/external screen
                             
 	-o <output>         External output to use. One of 'output0|output1'.
 	                    Will fallback to internal if output not connected.
