@@ -14,7 +14,7 @@ Usage
 	                        
 	-h                  Display this dialog and exit
 	
-	-d                  Show debug output
+	-v                  Verbose output
 	
 	-c                  Clone display instead of extending it
 	
