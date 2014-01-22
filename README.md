@@ -6,21 +6,21 @@ Display switcher utility for laptops
 Usage
 -----
 
-    usage: ./screenswitcher [options]
-    OPTIONS:
-      -h, --help, help          this dialog
-      -d, --debug, debug        show debug output
-      -y, --dryrun, dryrun      same as debug, but don't switch screen
-      -x, --config, config      print config options to STDOUT
-      -c, --clone, clone [mode] clone display. Optionally define preferred clone 
-                                resolution, e.g. 1024x768. Resolution has to be 
-                                whitelisted in $clone_res
-      -e, --extend, extend [orientation]
-                                extend display (default). optional orientation param
-                                might be one of 'above|below|left|right'
-      -s, --single, single:     don't (cycle) extend or clone, just switch directly
-                                between internal/external screen
+	Usage: $(basename "$0") [-h] [-d] [-c] [-m <mode>] [-e [<orientation>]]"
+	                        [-s] [-o <output>] [-q]"
+      -h                  Display this dialog and exit"
+      -d                  Show debug output"
+      -c                  Clone display instead of extending it."
+	    -m <mode>           Set clone resolution. Use pattern '[0-9]{3,}x[0-9]{3,}', "
 
+      -e [<orientation>]  Extend display (default). Optional orientation param"
+
+      -s                  Single display: don't (cycle) extend or clone,"
+	                        just switch between internal/external screen"
+	    -o <output>         External output to use. One of 'output0|output1'."
+	                        Will fallback to internal if output not connected."
+	                        If not set, will try output0 -> output1 -> internal"
+	    -q                  Quiet. Don't print active outputs after successful switch"
 Notes
 -----
 
