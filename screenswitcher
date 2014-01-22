@@ -12,7 +12,7 @@ internal="LVDS1"
 output0="HDMI1"
 output1="VGA1"
 
-# extend by default
+# clone default
 clone="false" 
 
 # default clone resolution
@@ -156,7 +156,7 @@ while [[ -n "$1" ]]; do
 			case "$1" in
 				output0) ;; # output0 already first in line, do nothing
 				output1) # swap output configs to have output1 go first
-					output=$output0;  o_output=$o_outputß # tmp
+					output=$output0;  o_output=$o_output0 # tmp
 					output0=$output1; o_output0=$o_output1
 					output1=$output;  o_output1=$o_output
 					;;
