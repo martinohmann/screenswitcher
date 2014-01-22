@@ -6,7 +6,7 @@ Display switcher utility for laptops
 Usage
 -----
 
-	Usage: $(basename "$0") [-h] [-d] [-c] [-m <mode>] [-e [<orientation>]]
+	Usage: screenswitcher [-h] [-d] [-c] [-m <mode>] [-e [<orientation>]]
 	                        [-s] [-o <output>] [-q]
 	                        
 	-h                  Display this dialog and exit
