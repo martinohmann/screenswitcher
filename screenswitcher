@@ -33,8 +33,8 @@ o_output0="left-of"
 # default extend orientation of output1
 o_output1="left-of" 
 
-# show debug output by default
-debug="false"
+# verbose output by default
+verbose="false"
 
 
 ## screenswitcher begin
@@ -51,7 +51,7 @@ usage() {
   echo 
   echo "    -h                  Display this dialog and exit"
   echo
-  echo "    -d                  Show debug output"
+  echo "    -v                  Verbose output"
   echo
   echo "    -c                  Clone display instead of extending it."
   echo
@@ -71,12 +71,12 @@ usage() {
 	echo "    -q                  Quiet. Don't print active outputs after successful switch"
 }
 
-debug() {
-	[[ "$debug" == "true" ]] && echo "[$(basename "$0")] $1"
+msg() {
+	[[ "$verbose" == "true" ]] && echo "[$(basename "$0")] $1"
 }
 
 bail() {
-	debug "xrandr failed to set display mode"
+	msg "xrandr failed to set display mode"
 	exit 1
 }
 
@@ -108,7 +108,6 @@ clone() {
 }
 
 single() {
-	echo "$1 $2 $3"
   xrandr --output "$1" --auto --output "$2" --off --output "$3" --off > /dev/null 2>&1	|| bail
 	[[ -z "$quiet" ]] && echo "single: $1"
 }
@@ -117,21 +116,21 @@ cycle() {
 	local out0=$1
 	local out1=$2
 
-	debug "$out0 connected"
+	msg "$out0 connected"
 
 	if [[ $(enabled "$out0") == "true" ]]; then
 		if [[ "$single" == "true" ]] || [[ $(enabled "$internal") == "true" ]]; then
-			debug "$out0 enabled, switching to single display $internal"
+			msg "$out0 enabled, switching to single display $internal"
 			single "$internal" "$out0" "$out1"
 		elif [[ "$clone" == "true" ]]; then
-			debug "cloning $internal and $out0 @ ${mode:-$default_mode}"
+			msg "cloning $internal and $out0 @ ${mode:-$default_mode}"
 			clone "$internal" "$out0" "$out1" "${mode:-$default_mode}"
 		else
-			debug "extending $internal $orientation $out0"
+			msg "extending $internal $orientation $out0"
 			extend "$internal" "$out0" "$out1" "$orientation"
 		fi
 	else
-		debug "$internal enabled, switching to single display $out0"
+		msg "$internal enabled, switching to single display $out0"
 		single "$out0" "$internal" "$out1"
 	fi
 }
@@ -141,8 +140,8 @@ while [[ -n "$1" ]]; do
   case $1 in
     -h) 
       usage; exit 0;;
-    -d)
-      debug="true"; shift;;
+    -v)
+      verbose="true"; shift;;
     -c)
       clone="true"; single="false"; shift;;
 		-m)
@@ -187,7 +186,7 @@ elif [[ -z "$no_auto" ]] && [[ $(connected "$output1") == "true" ]]; then
 	orientation=${orientation:-$o_output1}
 	cycle "$output1" "$output0"
 else
-	debug "no external displays, single display $internal"
+	msg "no external displays, single display $internal"
 	single "$internal" "$output0" "$output1"
 fi
 
