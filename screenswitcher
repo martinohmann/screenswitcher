@@ -41,27 +41,27 @@ verbose="false"
 xrandr_q=$(xrandr -q)
 
 usage() {
-  echo "Display switcher utility for laptops"
-  echo
-  echo "Invoke multiple times to cycle through display modes (default mode)"
-  echo "(internal displayy -> external display -> both -> internal display etc.)"
-  echo
+	echo "Display switcher utility for laptops"
+	echo
+	echo "Invoke multiple times to cycle through display modes (default mode)"
+	echo "(internal displayy -> external display -> both -> internal display etc.)"
+	echo
 	echo "Usage: $(basename "$0") [-h] [-d] [-c] [-m <mode>] [-e [<orientation>]]"
 	echo "                        [-s] [-o <output>] [-q]"
-  echo 
-  echo "    -h                  Display this dialog and exit"
-  echo
-  echo "    -v                  Verbose output"
-  echo
-  echo "    -c                  Clone display instead of extending it."
-  echo
+	echo 
+	echo "    -h                  Display this dialog and exit"
+	echo
+	echo "    -v                  Verbose output"
+	echo
+	echo "    -c                  Clone display instead of extending it."
+	echo
 	echo "    -m <mode>           Set clone resolution. Use pattern '[0-9]{3,}x[0-9]{3,}', "
 	echo "                        e.g. 800x600 (default: $default_mode)"
 	echo
-  echo "    -e [<orientation>]  Extend display (default). Optional orientation param"
-  echo "                        might be one of 'above|below|left-of|right-of'"
-  echo
-  echo "    -s                  Single display: don't (cycle) extend or clone,"
+	echo "    -e [<orientation>]  Extend display (default). Optional orientation param"
+	echo "                        might be one of 'above|below|left-of|right-of'"
+	echo
+	echo "    -s                  Single display: don't (cycle) extend or clone,"
 	echo "                        just switch between internal/external screen"
 	echo
 	echo "    -o <output>         External output to use. One of 'output0|output1'."
@@ -81,34 +81,34 @@ bail() {
 }
 
 connected() {
-  if [[ -n "$(echo "$xrandr_q" | grep "$1 connected")" ]]; then
-    echo "true" 
-  else 
-    echo "false"
-  fi
+	if [[ -n "$(echo "$xrandr_q" | grep "$1 connected")" ]]; then
+		echo "true" 
+	else 
+		echo "false"
+	fi
 }
 
 enabled() {
-  if [[ -z "$(echo "$xrandr_q" | grep "$1 connected (")" ]] && 
-    [[ -z "$(echo "$xrandr_q" | grep "$1 disconnected (")" ]]; then
-    echo "true"
-  else
-    echo "false"
-  fi
+	if [[ -z "$(echo "$xrandr_q" | grep "$1 connected (")" ]] && 
+		[[ -z "$(echo "$xrandr_q" | grep "$1 disconnected (")" ]]; then
+		echo "true"
+	else
+		echo "false"
+	fi
 }
 
 extend() {
-  xrandr --output "$1" --auto "--$4" "$2" --output "$3" --off > /dev/null 2>&1 || bail
+	xrandr --output "$1" --auto "--$4" "$2" --output "$3" --off > /dev/null 2>&1 || bail
 	[[ -z "$quiet" ]] && echo "extend: $1 $4 $2"
 }
 
 clone() {
-  xrandr --output "$1" --mode "$4" --output "$2" --mode "$4" --output "$3" --off > /dev/null 2>&1 || bail
+	xrandr --output "$1" --mode "$4" --output "$2" --mode "$4" --output "$3" --off > /dev/null 2>&1 || bail
 	[[ -z "$quiet" ]] && echo "clone: $1 $2 @ $4"
 }
 
 single() {
-  xrandr --output "$1" --auto --output "$2" --off --output "$3" --off > /dev/null 2>&1	|| bail
+	xrandr --output "$1" --auto --output "$2" --off --output "$3" --off > /dev/null 2>&1	|| bail
 	[[ -z "$quiet" ]] && echo "single: $1"
 }
 
@@ -137,27 +137,26 @@ cycle() {
 
 # parse args
 while [[ -n "$1" ]]; do
-  case $1 in
-    -h) 
-      usage; exit 0;;
-    -v)
-      verbose="true"; shift;;
-    -c)
-      clone="true"; single="false"; shift;;
+	case $1 in
+		-h) 
+			usage; exit 0;;
+		-v)
+			verbose="true"; shift;;
+		-c)
+			clone="true"; single="false"; shift;;
 		-m)
 			[[ ! "$2" =~ ^[0-9]{3,}x[0-9]{3,}$ ]] && { usage; exit 1; }
 			mode=$2; shift; shift;;
-    -e)
-      clone="false"; single="false";
+		-e)
+			clone="false"; single="false";
 			case "$2" in
-        above|below|left-of|right-of)
-          orientation="$2"; shift;;
-        *)
-					;;
+				above|below|left-of|right-of)
+					orientation="$2"; shift;;
+				*) ;;
 			esac
-      shift;;
-    -s)
-      clone="false"; single="true"; shift;;
+			shift;;
+		-s)
+			clone="false"; single="true"; shift;;
 		-o)
 			no_auto="true"; shift
 			case "$1" in
@@ -168,14 +167,14 @@ while [[ -n "$1" ]]; do
 					output1=$output;  o_output1=$o_output
 					;;
 				*)
-					usage; exit 1;;
+				usage; exit 1;;
 			esac
 			shift;;
 		-q)
 			quiet="true"; shift;;
 		*)
 			usage; exit 1;;
-  esac
+	esac
 done
 
 # switch screen
