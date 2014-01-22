@@ -8,6 +8,7 @@ Usage
 
 	Usage: $(basename "$0") [-h] [-d] [-c] [-m <mode>] [-e [<orientation>]]
 	                        [-s] [-o <output>] [-q]
+	                        
 	-h                  Display this dialog and exit
 	-d                  Show debug output"
 	-c                  Clone display instead of extending it.
