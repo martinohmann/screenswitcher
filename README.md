@@ -4,7 +4,7 @@ screenswitcher
 Display switcher utility for laptops
 
 Invoke multiple times to cycle through display modes (default mode) 
-(internal display only -> external display only -> both -> internal...)
+(internal display -> external display -> both -> internal display etc.)
 
 Usage
 -----
