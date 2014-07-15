@@ -42,7 +42,7 @@ usage() {
 	echo "(internal display -> external display -> both -> internal display etc.)"
 	echo
 	echo "Usage: ${script_name} [-h] [-d] [-c] [-m <mode>] [-e [<orientation>]]"
-	echo "                        [-s] [-o <output>] [-q]"
+	echo "                        [-s] [-o <output>]"
 	echo 
 	echo "    -h                  Display this dialog and exit"
 	echo

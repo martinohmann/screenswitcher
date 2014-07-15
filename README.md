@@ -10,7 +10,7 @@ Usage
 -----
 
 	Usage: screenswitcher [-h] [-d] [-c] [-m <mode>] [-e [<orientation>]]
-	                        [-s] [-o <output>] [-q]
+	                        [-s] [-o <output>]
 	                        
 	-h                  Display this dialog and exit
 	
@@ -30,5 +30,3 @@ Usage
 	-o <output>         External output to use. One of 'output0|output1'.
 	                    Will fallback to internal if output not connected.
 	                    If not set, will try output0 -> output1 -> internal
-	                    
-	-q                  Quiet. Don't print active outputs after successful switch
