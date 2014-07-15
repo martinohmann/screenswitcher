@@ -12,7 +12,7 @@ internal="LVDS1"
 output0="HDMI1"
 output1="VGA1"
 
-# clone default
+# clone by default
 clone="false" 
 
 # default clone resolution
@@ -33,24 +33,25 @@ verbose="false"
 
 ## screenswitcher begin
 xrandr_q=$(xrandr -q)
+script_name=$(basename "$0")
 
 usage() {
 	echo "Display switcher utility for laptops"
 	echo
 	echo "Invoke multiple times to cycle through display modes (default mode)"
-	echo "(internal displayy -> external display -> both -> internal display etc.)"
+	echo "(internal display -> external display -> both -> internal display etc.)"
 	echo
-	echo "Usage: $(basename "$0") [-h] [-d] [-c] [-m <mode>] [-e [<orientation>]]"
+	echo "Usage: ${script_name} [-h] [-d] [-c] [-m <mode>] [-e [<orientation>]]"
 	echo "                        [-s] [-o <output>] [-q]"
 	echo 
 	echo "    -h                  Display this dialog and exit"
 	echo
 	echo "    -v                  Verbose output"
 	echo
-	echo "    -c                  Clone display instead of extending it."
+	echo "    -c                  Clone display instead of extending it"
 	echo
 	echo "    -m <mode>           Set clone resolution. Use pattern '[0-9]{3,}x[0-9]{3,}', "
-	echo "                        e.g. 800x600 (default: $default_mode)"
+	echo "                        e.g. 800x600 (default: ${default_mode})"
 	echo
 	echo "    -e [<orientation>]  Extend display (default). Optional orientation param"
 	echo "                        might be one of 'above|below|left-of|right-of'"
@@ -61,12 +62,10 @@ usage() {
 	echo "    -o <output>         External output to use. One of 'output0|output1'."
 	echo "                        Will fallback to internal if output not connected."
 	echo "                        If not set, will try output0 -> output1 -> internal"
-	echo
-	echo "    -q                  Quiet. Don't print active outputs after successful switch"
 }
 
 msg() {
-	[[ "$verbose" == "true" ]] && echo "[$(basename "$0")] $1"
+	[[ "$verbose" == "true" ]] && echo "[${script_name}] $1"
 }
 
 bail() {
@@ -75,35 +74,32 @@ bail() {
 }
 
 connected() {
-	if [[ -n "$(echo "$xrandr_q" | grep "$1 connected")" ]]; then
-		echo "true" 
-	else 
-		echo "false"
+	if echo "$xrandr_q" | grep "$1 connected" > /dev/null 2>&1; then
+		return 0 
 	fi
+	
+	return 1
 }
 
 enabled() {
-	if [[ -z "$(echo "$xrandr_q" | grep "$1 connected (")" ]] && 
-		[[ -z "$(echo "$xrandr_q" | grep "$1 disconnected (")" ]]; then
-		echo "true"
-	else
-		echo "false"
+	if echo "$xrandr_q" | grep "$1 connected (" > /dev/null 2>&1 || 
+		echo "$xrandr_q" | grep "$1 disconnected (" > /dev/null 2>&1; then
+		return 1
 	fi
+	
+	return 0
 }
 
 extend() {
 	xrandr --output "$1" --auto "--$4" "$2" --output "$3" --off > /dev/null 2>&1 || bail
-	[[ -z "$quiet" ]] && echo "extend: $1 $4 $2"
 }
 
 clone() {
 	xrandr --output "$1" --mode "$4" --output "$2" --mode "$4" --output "$3" --off > /dev/null 2>&1 || bail
-	[[ -z "$quiet" ]] && echo "clone: $1 $2 @ $4"
 }
 
 single() {
 	xrandr --output "$1" --auto --output "$2" --off --output "$3" --off > /dev/null 2>&1	|| bail
-	[[ -z "$quiet" ]] && echo "single: $1"
 }
 
 cycle() {
@@ -112,8 +108,8 @@ cycle() {
 
 	msg "$out0 connected"
 
-	if [[ $(enabled "$out0") == "true" ]]; then
-		if [[ "$single" == "true" ]] || [[ $(enabled "$internal") == "true" ]]; then
+	if enabled "$out0"; then
+		if [[ "$single" == "true" ]] || enabled "$internal"; then
 			msg "$out0 enabled, switching to single display $internal"
 			single "$internal" "$out0" "$out1"
 		elif [[ "$clone" == "true" ]]; then
@@ -128,7 +124,6 @@ cycle() {
 		single "$out0" "$internal" "$out1"
 	fi
 }
-
 # parse args
 while [[ -n "$1" ]]; do
 	case $1 in
@@ -164,18 +159,22 @@ while [[ -n "$1" ]]; do
 				usage; exit 1;;
 			esac
 			shift;;
-		-q)
-			quiet="true"; shift;;
 		*)
 			usage; exit 1;;
 	esac
 done
 
+# check for xrandr
+if ! which xrandr > /dev/null 2>&1; then
+	msg "xrandr not found"
+	exit 1
+fi
+
 # switch screen
-if [[ $(connected "$output0") == "true" ]]; then
+if connected "$output0"; then
 	orientation=${orientation:-$o_output0}
 	cycle "$output0" "$output1"
-elif [[ -z "$no_auto" ]] && [[ $(connected "$output1") == "true" ]]; then
+elif [[ -z "$no_auto" ]] && connected "$output1"; then
 	orientation=${orientation:-$o_output1}
 	cycle "$output1" "$output0"
 else
