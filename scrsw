@@ -1,0 +1,332 @@
+#!/bin/bash
+#
+# The MIT License (MIT) Copyright (c) 2016 Martin Ohmann
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+#
+readonly NAME=scrsw
+readonly VERSION=0.1.0
+
+usage() {
+  cat <<-EOS
+$NAME $VERSION - xrandr wrapper to conveniently switch between display modes.
+
+usage: $NAME [options]
+  -h|--help             Show this help and exit.
+  -s|--single [<name>]  Enable single display mode. If no display name is
+                        given, the next connected display will be enabled.
+                        The ordering is the same as in the output
+                        of \`xrandr -q\`.
+  -e|--extend [<position=left|right|above|below>]
+                        Extend display over all connected monitors. If
+                        position is given, extend displays in this direction.
+                        Displays are ordered as in the output of \`xrandr -q\`
+                        (default: ${position//-of/}).
+  -c|--clone [<mode>]   Clone display over all connected monitors. Set
+                        resolution of the cloned displays via the optional
+                        mode parameter (default: $mode).
+  -S|--status           Show the current display status and exit. Uses the
+                        output of \`xrandr -q\` for more details.
+  -C|--cycle            Cycle display modes:  single -> extend -> clone.
+  -v|--verbose          Enable more verbose output.
+  -D|--debug            Enable debug output.
+  -V|--version          Show program version and exit.
+EOS
+}
+
+detect_displays() {
+  xrandr_q="$(xrandr -q)"
+  connected_displays=( $(filter_displays ' connected') )
+  active_displays=( $(filter_displays 'connected( primary)? [0-9]+') )
+  all_displays=( $(filter_displays 'connected') )
+}
+
+filter_displays() {
+  local filter="$1"
+  egrep "$filter" <<< "$xrandr_q" | cut -d' ' -f1
+}
+
+_get_next_display_index() {
+  local next_index
+  local active_display=${active_displays[0]}
+  local connected_count=${#connected_displays[@]}
+
+  for d in ${connected_displays[@]}; do
+    ((next_index++))
+    [ "$d" = "$active_display" ] && break
+  done
+  echo $((next_index % connected_count))
+}
+
+get_next_display() {
+  local index=$(_get_next_display_index)
+  echo ${connected_displays[$index]}
+}
+
+is_in_array() {
+  local e
+  for e in "${@:2}"; do
+    [ "$e" == "$1" ] && return 0
+  done
+  return 1
+}
+
+is_optional_param() {
+  [ -n "$1" ] && ! [[ "$1" =~ ^- ]]
+}
+
+is_last_display() {
+  local index=$(_get_next_display_index)
+  [ $index -eq 0 ] && return 0
+  return 1
+}
+
+is_cloned() {
+  local count=$(egrep -c "[0-9]+x[0-9]+\+0\+0" <<< "$xrandr_q")
+  [ $count -eq ${#active_displays[@]} ] && return 0
+  return 1
+}
+
+log() {
+  echo -e "$@"
+}
+
+log_debug() {
+  [ $debug -eq 1 ] && log "debug: $@"
+}
+
+log_info() {
+  [ $verbose -eq 1 ] || [ $debug -eq 1 ] && log "info: $@"
+}
+
+log_error() {
+  echo -e "error: $@" 1>&2
+}
+
+single_display() {
+  local display="$1"
+  local args
+
+  if [ "$display" = "auto" ]; then
+    display="$(get_next_display)"
+  fi
+
+  log_info "single mode $display"
+
+  for d in ${all_displays[@]}; do
+    if [ "$d" != "$display" ]; then
+      args+="--output $d --off "
+    fi
+  done
+  log_debug "xrandr $args --output $display --auto"
+  xrandr $args --output $display --auto
+}
+
+extend_display() {
+  local previous_display
+  local args
+
+  log_info "extending $position using ${connected_displays[@]}"
+
+  for d in ${all_displays[@]}; do
+    if is_in_array "$d" "${connected_displays[@]}"; then
+      args+="--output $d --auto "
+      if [ -n "$previous_display" ]; then
+        args+="--$position $previous_display "
+      fi
+      previous_display="$d"
+    else
+      args+="--output $d --off "
+    fi
+  done
+  log_debug "xrandr $args"
+  xrandr $args
+}
+
+clone_display() {
+  local previous_display
+  local args
+
+  log_info "cloning in mode $mode using ${connected_displays[@]}"
+
+  for d in ${all_displays[@]}; do
+    if is_in_array "$d" "${connected_displays[@]}"; then
+      args+="--output $d --mode $mode "
+      if [ -n "$previous_display" ]; then
+        args+="--same-as $previous_display "
+      fi
+      previous_display="$d"
+    else
+      args+="--output $d --off "
+    fi
+  done
+  log_debug "xrandr $args"
+  xrandr $args
+}
+
+cycle_modes() {
+  if [ ${#active_displays[@]} -eq 1 ]; then
+    if ! is_last_display; then
+      single_display auto
+    else
+      extend_display
+    fi
+  elif is_cloned; then
+    single_display "${active_displays[0]}"
+  else
+    clone_display
+  fi
+}
+
+print_status() {
+  local status=extended
+  if [ ${#active_displays[@]} -eq 1 ]; then
+    status=single
+  elif is_cloned; then
+    status=cloned
+  fi
+  log "${status}: ${active_displays[@]}\n"
+  log "$xrandr_q"
+}
+
+parse_args() {
+  local actions=0
+  local display_list
+
+  declare -a display_list
+
+  while [ $# -ge 1 ]; do
+    case "$1" in
+      -h|--help)
+        usage
+        exit ;;
+      -s|--single)
+        action=single
+        ((actions++))
+        if is_optional_param "$2"; then
+          if [ "$2" = "auto" ] || is_in_array "$2" "${connected_displays[@]}"; then
+            display=$2
+            shift
+          else
+            log_error "display $2 is not a connected."
+            exit 1
+          fi
+        fi ;;
+      -e|--extend)
+        action=extend
+        ((actions++))
+        if is_optional_param "$2"; then
+          case "$2" in
+            left|right)
+              position="${2}-of"
+              shift ;;
+            above|below)
+              position="$2"
+              shift ;;
+            *)
+              log_error "$2 is not a valid position argument."
+              exit 1 ;;
+          esac
+        fi ;;
+      -c|--clone)
+        action=clone
+        ((actions++))
+        if is_optional_param "$2"; then
+          if [ "$2" =~ ^[0-9]+x[0-9]+ ]; then
+            mode=$2
+            shift
+          else
+            log_error "$2 is not a valid resolution."
+            exit 1
+          fi
+        fi ;;
+      -C|--cycle)
+        action=cycle
+        ((actions++)) ;;
+      -d|--displays)
+        if is_optional_param "$2"; then
+          display_list=( $(tr ':' '\n' <<< "$2") )
+          for d in ${display_list[@]}; do
+            if ! is_in_array "$d" "${connected_displays[@]}"; then
+              log_error "display $d is not connected."
+              exit 1
+            fi
+          done
+          connected_displays=( "${display_list[@]}" )
+          shift
+        else
+          log_error "$1 expecting a colon-separated list of displays names, e.g. 'DP1:HDMI2:eDP1'."
+        fi ;;
+      -S|--status)
+        print_status
+        exit ;;
+      -v|--verbose)
+        verbose=1 ;;
+      -D|--debug)
+        debug=1 ;;
+      -V|--version)
+        echo "$NAME $VERSION"
+        exit ;;
+      *)
+        log_error "invalid argument: $1. use -h to get a list of all valid options."
+        exit 1 ;;
+    esac
+    shift
+  done
+
+  if [ $actions -gt 1 ]; then
+    log_error 'options -s, -c, -e and -C cannot be combined.'
+    exit 1
+  fi
+}
+
+configure_displays() {
+  log_debug "connected displays: ${connected_displays[@]}"
+  log_debug "active displays: ${active_displays[@]}"
+
+  # exit early if there is only one display connected
+  if [ ${#connected_displays[@]} -eq 1 ]; then
+    single_display "${connected_displays[0]}"
+    exit
+  fi
+
+  case "$action" in
+    extend) extend_display ;;
+    clone) clone_display ;;
+    cycle) cycle_modes ;;
+    *) single_display "$display" ;;
+  esac
+}
+
+## globals
+action=single
+debug=0
+display=auto
+mode=1920x1080
+position=left-of
+verbose=0
+
+declare -a active_displays
+declare -a all_displays
+declare -a connected_displays
+
+## run
+detect_displays
+parse_args "$@"
+configure_displays

@@ -1,32 +1,30 @@
-screenswitcher
-==============
+scrsw
+=====
 
-Display switcher utility for laptops
+scrsw is a wrapper around xrandr to easily switch between connected display. 
 
-Invoke multiple times to cycle through display modes (default mode) 
-(internal display -> external display -> both -> internal display etc.)
-
-Usage
+usage
 -----
 
-	Usage: screenswitcher [-h] [-d] [-c] [-m <mode>] [-e [<orientation>]]
-	                        [-s] [-o <output>]
-	                        
-	-h                  Display this dialog and exit
-	
-	-v                  Verbose output
-	
-	-c                  Clone display instead of extending it
-	
-	-m <mode>           Set clone resolution. Use pattern '[0-9]{3,}x[0-9]{3,}',
-	                    e.g. 800x600 (default: 1024x768)
-	                    
-	-e [<orientation>]  Extend display (default). Optional orientation param
-	                    might be one of 'above|below|left-of|right-of'
-	                    
-	-s                  Single display: don't (cycle) extend or clone,
-	                    just switch between internal/external screen
-                            
-	-o <output>         External output to use. One of 'output0|output1'.
-	                    Will fallback to internal if output not connected.
-	                    If not set, will try output0 -> output1 -> internal
+  scrsw 0.1.0 - xrandr wrapper to conveniently switch between display modes.
+
+  usage: scrsw [options]
+    -h|--help             Show this help and exit.
+    -s|--single [<name>]  Enable single display mode. If no display name is
+                          given, the next connected display will be enabled.
+                          The ordering is the same as in the output
+                          of `xrandr -q`.
+    -e|--extend [<position=left|right|above|below>]
+                          Extend display over all connected monitors. If
+                          position is given, extend displays in this direction.
+                          Displays are ordered as in the output of `xrandr -q`
+                          (default: left).
+    -c|--clone [<mode>]   Clone display over all connected monitors. Set
+                          resolution of the cloned displays via the optional
+                          mode parameter (default: 1920x1080).
+    -S|--status           Show the current display status and exit. Uses the
+                          output of `xrandr -q` for more details.
+    -C|--cycle            Cycle display modes:  single -> extend -> clone.
+    -v|--verbose          Enable more verbose output.
+    -D|--debug            Enable debug output.
+    -V|--version          Show program version and exit.
