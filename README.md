@@ -6,8 +6,6 @@ scrsw is a wrapper around xrandr to easily switch between connected display.
 usage
 -----
 
-    scrsw 0.1.0 - xrandr wrapper to conveniently switch between display modes.
-
     usage: scrsw [options]
       -h|--help             Show this help and exit.
       -s|--single [<name>]  Enable single display mode. If no display name is
