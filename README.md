@@ -1,7 +1,7 @@
 scrsw
 =====
 
-scrsw is a wrapper around xrandr to easily switch between connected display. 
+scrsw is a wrapper around xrandr to easily switch between connected display.
 
 usage
 -----
@@ -20,6 +20,14 @@ usage
       -c|--clone [<mode>]   Clone display over all connected monitors. Set
                             resolution of the cloned displays via the optional
                             mode parameter (default: 1920x1080).
+      -d|--displays <displays>
+                            Specify displays to consider as connected. This is
+                            useful when there are multiple connected displays and
+                            the screen should be extended or cloned using only a
+                            subset of these. Also, the ordering of the display
+                            names can be specified via this command (useful for
+                            extend). The argument is a colon-separated list of
+                            display names, e.g. 'DP1:HDMI2:eDP1'.
       -S|--status           Show the current display status and exit. Uses the
                             output of `xrandr -q` for more details.
       -C|--cycle            Cycle display modes:  single -> extend -> clone.
