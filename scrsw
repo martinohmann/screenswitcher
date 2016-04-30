@@ -279,7 +279,7 @@ parse_args() {
           connected_displays=( "${display_list[@]}" )
           shift
         else
-          log_error "$1 expecting a colon-separated list of displays names, e.g. 'DP1:HDMI2:eDP1'."
+          log_error "$1 expects a colon-separated list of displays names, e.g. 'DP1:HDMI2:eDP1'."
         fi ;;
       -S|--status)
         print_status
