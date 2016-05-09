@@ -8,9 +8,9 @@ usage
 
     usage: scrsw [options]
       -h|--help             Show this help and exit.
-      -s|--single [<name>]  Enable single display mode. If no display name is
-                            given, the next connected display will be enabled.
-                            The ordering is the same as in the output
+      -s|--single [<name>]  Enable single display mode. If no display name or
+                            'auto' is given, the next connected display will be
+                            enabled. The ordering is the same as in the output
                             of `xrandr -q`.
       -e|--extend [<position=left|right|above|below>]
                             Extend display over all connected monitors. If
