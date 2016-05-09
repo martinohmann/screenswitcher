@@ -21,7 +21,7 @@
 # SOFTWARE.
 #
 readonly NAME=scrsw
-readonly VERSION=0.1.3
+readonly VERSION=0.2.0
 
 usage() {
   cat <<-EOS
@@ -51,6 +51,9 @@ usage: $NAME [options]
                         display names, e.g. 'DP1:HDMI2:eDP1'.
   -S|--status           Show the current display status and exit. Uses the
                         output of \`xrandr -q\` for more details.
+  -E|--post-exec <cmd>  Execute command if scrsw finished without errors.
+                        This is useful to e.g. reset the wallpaper after
+                        switching screens.
   -C|--cycle            Cycle display modes:  single -> extend -> clone.
   -v|--verbose          Enable more verbose output.
   -D|--debug            Enable debug output.
@@ -285,6 +288,13 @@ parse_args() {
       -S|--status)
         print_status
         exit ;;
+      -E|--post-exec)
+        if is_optional_param "$2"; then
+          post_exec_cmd="$2"
+          shift
+        else
+          exit_error "$1 expects a command as parameter."
+        fi ;;
       -v|--verbose)
         verbose=1 ;;
       -D|--debug)
@@ -309,18 +319,16 @@ configure_displays() {
   log_debug "connected displays: ${connected_displays[@]}"
   log_debug "active displays: ${active_displays[@]}"
 
-  # exit early if there is only one display connected
   if [ ${#connected_displays[@]} -eq 1 ]; then
     single_display "${connected_displays[0]}"
-    exit
+  else
+    case "$action" in
+      extend) extend_display ;;
+      clone) clone_display ;;
+      cycle) cycle_modes ;;
+      *) single_display "$display" ;;
+    esac
   fi
-
-  case "$action" in
-    extend) extend_display ;;
-    clone) clone_display ;;
-    cycle) cycle_modes ;;
-    *) single_display "$display" ;;
-  esac
 }
 
 ## globals
@@ -329,6 +337,7 @@ debug=0
 display=auto
 mode=1920x1080
 position=left-of
+post_exec_cmd=
 verbose=0
 
 declare -a active_displays
@@ -339,3 +348,4 @@ declare -a connected_displays
 detect_displays
 parse_args "$@"
 configure_displays
+[ $? -eq 0 ] && [ -n "$post_exec_cmd" ] && $post_exec_cmd

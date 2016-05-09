@@ -30,6 +30,9 @@ usage
                             display names, e.g. 'DP1:HDMI2:eDP1'.
       -S|--status           Show the current display status and exit. Uses the
                             output of `xrandr -q` for more details.
+      -E|--post-exec <cmd>  Execute command if scrsw finished without errors.
+                            This is useful to e.g. reset the wallpaper after
+                            switching screens.
       -C|--cycle            Cycle display modes:  single -> extend -> clone.
       -v|--verbose          Enable more verbose output.
       -D|--debug            Enable debug output.
