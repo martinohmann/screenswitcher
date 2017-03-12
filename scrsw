@@ -21,7 +21,7 @@
 # SOFTWARE.
 #
 readonly NAME=scrsw
-readonly VERSION=0.2.1
+readonly VERSION=0.3.0
 
 usage() {
   cat <<-EOS
@@ -197,6 +197,20 @@ clone_display() {
   xrandr $args
 }
 
+reorder_displays() {
+  local disconnected_displays=()
+
+  log_info "reordering displays"
+
+  for d in "${all_displays[@]}"; do
+    if ! is_in_array "$d" "${connected_displays[@]}"; then
+      disconnected_displays+=( "$d" )
+    fi
+  done
+  all_displays=( "${disconnected_displays[@]}" "${connected_displays[@]}" )
+  log_debug "reordered displays: ${all_displays[*]}"
+}
+
 cycle_modes() {
   if [ ${#active_displays[@]} -eq 1 ]; then
     if ! is_last_display; then
@@ -354,5 +368,8 @@ declare -a connected_displays
 ## run
 detect_displays
 parse_args "$@"
+reorder_displays
 configure_displays
+
+# shellcheck disable=SC2181
 [ $? -eq 0 ] && [ -n "$post_exec_cmd" ] && $post_exec_cmd
